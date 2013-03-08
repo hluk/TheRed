@@ -3,17 +3,17 @@
           | | |   | -_| |    -| -_| . |
           |_| |_|_|___| |__|__|___|___|
 
-Change intensity of colors from tray.
+Change intensity of screen colors from tray.
 
 This is application similar to [f.lux](http://stereopsis.com/flux/) and
 [Redshift](http://jonls.dk/redshift/) except that how and when colors are
 darkened is completely up to user.
 
-Color intensity can be changed by left and right button or mouse wheel on tray
-icon.
+Color intensity can be changed by clicking with left and right button or
+scrolling with mouse wheel on tray icon.
 
 Amount to decrement for each color component (red, green and blue) can be
-modified by user.
+modified by user (by passing arguments to the application).
 
 Command Line
 ------------
