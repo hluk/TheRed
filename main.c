@@ -244,7 +244,7 @@ gboolean on_tray_scroll(GtkStatusIcon *status_icon,
     GdkScrollDirection scroll = event->scroll.direction;
 
     if (scroll == GDK_SCROLL_UP ) {
-        app_set_dark(app.x - 1);
+        app_set_dark(app.x + 1);
     } else if (scroll == GDK_SCROLL_DOWN) {
         app_set_dark(app.x - 1);
     } else {
