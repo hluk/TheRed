@@ -17,6 +17,10 @@
     along with TheRed.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef HAS_SHORTCUTS
+#   include "libkeybinder/keybinder.h"
+#endif
+
 #include <gtk/gtk.h>
 #include <string.h>
 #include <stdlib.h>
@@ -35,6 +39,10 @@
 
 #define UNUSED(x) (void)x
 
+#ifdef HAS_SHORTCUTS
+#   define SHORTCUT_SIZE 256
+#endif // HAS_SHORTCUTS
+
 // stringify
 #define strx(x) #x
 #define str(x) strx(x)
@@ -48,6 +56,10 @@ struct {
     unsigned short g;
     unsigned short b;
     short x;
+#ifdef HAS_SHORTCUTS
+    char shortcut_increase[SHORTCUT_SIZE];
+    char shortcut_decrease[SHORTCUT_SIZE];
+#endif // HAS_SHORTCUTS
 } app;
 
 /**
@@ -125,6 +137,10 @@ void app_init()
     app.g = DEFAULT_GREEN;
     app.b = DEFAULT_BLUE;
     app.x = 0;
+#ifdef HAS_SHORTCUTS
+    app.shortcut_increase[0] = '\0';
+    app.shortcut_decrease[0] = '\0';
+#endif // HAS_SHORTCUTS
 }
 
 void app_update_tray_icon()
@@ -179,10 +195,19 @@ void print_help(const char *cmd)
     printf("OPTIONS:\n");
     printf("  -h, --help         Print this help.\n");
     printf("  -v, --version      Print version.\n");
+    printf("\n");
     printf("  -r, --red   VALUE  Amount of red to change   (default is " str(DEFAULT_RED)   ").\n");
     printf("  -g, --green VALUE  Amount of green to change (default is " str(DEFAULT_GREEN) ").\n");
     printf("  -b, --blue  VALUE  Amount of blue to change  (default is " str(DEFAULT_BLUE)  ").\n");
     printf("\n");
+#ifdef HAS_SHORTCUTS
+    printf("  -d, --darken  SHORTCUT  System-wide shortcut to darken screen.\n");
+    printf("  -l, --lighten SHORTCUT  System-wide shortcut to lighten screen.\n");
+    printf("\n");
+    printf("Argument SHORTCUT must have correct format. "
+           "It can be for example \"<Ctrl><Alt>D\" or \"<Super>X\".\n");
+    printf("\n");
+#endif // HAS_SHORTCUTS
     printf("Red, green and blue values must be in range from 0 to 255.\n");
     printf("\n");
     print_simple_version();
@@ -266,6 +291,67 @@ void create_tray_icon()
                       G_CALLBACK(on_tray_scroll), NULL );
 }
 
+const char *parse_next_command_line_argument(int argc, char **argv, int *i)
+{
+    if (*i + 1 == argc) {
+        fprintf(stderr, "Missing color value for option \"%s\"!\n", argv[*i]);
+        exit(2);
+    }
+
+    ++*i;
+    return argv[*i];
+}
+
+gboolean parse_command_line_colors(int argc, char **argv, int *i)
+{
+    unsigned short *color = NULL;
+    const char *arg = argv[*i];
+    if ( is_arg(arg, 'r', "red") )
+        color = &app.r;
+    else if ( is_arg(arg, 'g', "green") )
+        color = &app.g;
+    else if ( is_arg(arg, 'b', "blue") )
+        color = &app.b;
+
+    if (color == NULL)
+        return FALSE;
+
+    arg = parse_next_command_line_argument(argc, argv, i);
+    int value = atoi(arg);
+
+    if (value < 0 || value > 255) {
+        fprintf(stderr, "Color value must be in range from 0 to 255!\n");
+        exit(2);
+    }
+
+    *color = value;
+
+    return TRUE;
+}
+
+#ifdef HAS_SHORTCUTS
+gboolean parse_command_line_shortcuts(int argc, char **argv, int *i)
+{
+    UNUSED(argc);
+
+    const char *arg = argv[*i];
+
+    char *shortcut = NULL;
+    if ( is_arg(arg, 'd', "darken-shortcut") )
+        shortcut = app.shortcut_decrease;
+    else if ( is_arg(arg, 'l', "lighten-shortcut") )
+        shortcut = app.shortcut_increase;
+
+    if (shortcut == NULL)
+        return FALSE;
+
+    arg = parse_next_command_line_argument(argc, argv, i);
+    strncpy(shortcut, arg, SHORTCUT_SIZE);
+
+    return TRUE;
+}
+#endif // HAS_SHORTCUTS
+
 void parse_command_line(int argc, char **argv)
 {
     for (int i = 1; i < argc; ++i) {
@@ -276,35 +362,51 @@ void parse_command_line(int argc, char **argv)
             print_version();
             exit(0);
         } else {
-            unsigned short *color = NULL;
-            if ( is_arg(argv[i], 'r', "red") )
-                color = &app.r;
-            else if ( is_arg(argv[i], 'g', "green") )
-                color = &app.g;
-            else if ( is_arg(argv[i], 'b', "blue") )
-                color = &app.b;
-
-            if (color == NULL) {
+            if ( !parse_command_line_colors(argc, argv, &i)
+#ifdef HAS_SHORTCUTS
+                 && !parse_command_line_shortcuts(argc, argv, &i)
+#endif // HAS_SHORTCUTS
+                 )
+            {
                 fprintf(stderr, "Unknown option \"%s\"!\n", argv[i]);
                 exit(2);
             }
-
-            if (i + 1 == argc) {
-                fprintf(stderr, "Missing color value for option \"%s\"!\n", argv[i]);
-                exit(2);
-            }
-
-            int value = atoi(argv[++i]);
-
-            if (value < 0 || value > 255) {
-                fprintf(stderr, "Color value must be in range from 0 to 255!\n");
-                exit(2);
-            }
-
-            *color = value;
         }
     }
 }
+
+#ifdef HAS_SHORTCUTS
+void on_shortcut_increase_pressed(const char *keystring, void *data)
+{
+    UNUSED(data);
+    UNUSED(keystring);
+
+    app_set_dark(app.x + 1);
+}
+
+void on_shortcut_decrease_pressed(const char *keystring, void *data)
+{
+    UNUSED(data);
+    UNUSED(keystring);
+
+    app_set_dark(app.x - 1);
+}
+
+void init_shortcut(const char *shortcut, KeybinderHandler handler)
+{
+    if ( !keybinder_bind(shortcut, handler, NULL) )
+        fprintf(stderr, "Cannot register shortcut \"%s\"!\n", shortcut);
+}
+
+void init_shortcuts()
+{
+    keybinder_init();
+    if (app.shortcut_increase[0] != '\0')
+        init_shortcut(app.shortcut_increase, on_shortcut_increase_pressed);
+    if (app.shortcut_decrease[0] != '\0')
+        init_shortcut(app.shortcut_decrease, on_shortcut_decrease_pressed);
+}
+#endif // HAS_SHORTCUTS
 
 int main(int argc, char **argv)
 {
@@ -315,6 +417,10 @@ int main(int argc, char **argv)
     gtk_init(&argc, &argv);
 
     create_tray_icon();
+
+#ifdef HAS_SHORTCUTS
+    init_shortcuts();
+#endif // HAS_SHORTCUTS
 
     gtk_main();
 
