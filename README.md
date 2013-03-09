@@ -24,9 +24,15 @@ Command Line
     OPTIONS:
       -h, --help         Print this help.
       -v, --version      Print version.
+
       -r, --red   VALUE  Amount of red to change   (default is 0).
-      -g, --green VALUE  Amount of green to change (default is 16).
+      -g, --green VALUE  Amount of green to change (default is 12).
       -b, --blue  VALUE  Amount of blue to change  (default is 24).
+
+      -d, --darken  SHORTCUT  System-wide shortcut to darken screen.
+      -l, --lighten SHORTCUT  System-wide shortcut to lighten screen.
+
+    Argument SHORTCUT must have correct format. It can be for example "<Ctrl><Alt>D" or "<Super>X".
 
     Red, green and blue values must be in range from 0 to 255.
 
