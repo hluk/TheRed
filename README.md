@@ -1,7 +1,5 @@
-         _____ _         _____       _
-        |_   _| |_ ___  | __  |___ _| |
-          | | |   | -_| |    -| -_| . |
-          |_| |_|_|___| |__|__|___|___|
+The Red
+=======
 
 Change intensity of screen colors from tray.
 

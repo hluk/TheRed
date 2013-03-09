@@ -171,20 +171,14 @@ void reset_colors()
     change_colors(0, 0, 0);
 }
 
-void print_simple_version()
+void print_build_info()
 {
-    printf("The Red 1.0 (c) 2013 Lukas Holecek (hluk@email.cz)\n");
     printf("Build with: GTK+ %d.%d.%d\n", GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION);
 }
 
 void print_version()
 {
-    printf("         _____ _         _____       _\n");
-    printf("        |_   _| |_ ___  | __  |___ _| |\n");
-    printf("          | | |   | -_| |    -| -_| . |\n");
-    printf("          |_| |_|_|___| |__|__|___|___|\n");
-    printf("\n");
-    print_simple_version();
+    printf("The Red 1.0 (c) 2013 Lukas Holecek (hluk@email.cz)\n");
 }
 
 void print_help(const char *cmd)
@@ -210,7 +204,7 @@ void print_help(const char *cmd)
 #endif // HAS_SHORTCUTS
     printf("Red, green and blue values must be in range from 0 to 255.\n");
     printf("\n");
-    print_simple_version();
+    print_version();
 }
 
 gboolean is_arg(const char *arg, char shortOption, const char *longOption)
@@ -360,6 +354,7 @@ void parse_command_line(int argc, char **argv)
             exit(0);
         } else if ( is_arg(argv[i], 'v', "version") ) {
             print_version();
+            print_build_info();
             exit(0);
         } else {
             if ( !parse_command_line_colors(argc, argv, &i)
