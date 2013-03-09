@@ -145,7 +145,7 @@ void app_init()
 
 void app_update_tray_icon()
 {
-    char filename[] = "images/thered_0.svg";
+    char filename[] = str(INSTALL_PREFIX_IMAGES) "/thered_0.svg";
     filename[sizeof(filename) * sizeof(char) - 6] = '0' + bound(0, -app.x / 2, 9);
     gtk_status_icon_set_from_file(app.tray, filename);
 }

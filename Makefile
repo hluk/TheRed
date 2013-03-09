@@ -1,10 +1,10 @@
 # install prefix
 prefix = /usr/local
 prefix_bin = $(prefix)/bin
-prefix_images = "$(prefix)/share/icons/hicolor/scalable/apps"
+prefix_images = $(prefix)/share/icons/hicolor/scalable/apps
 # binary filename
 EXE = thered
-ICON = images/thered.svg
+IMAGES_PREFIX = images/thered
 SRCS = main.c
 
 # required packages for pkg-config
@@ -46,5 +46,5 @@ clean:
 install:
 	mkdir -p "$(prefix_bin)" "$(prefix_images)"
 	sudo install "$(EXE)" "$(prefix_bin)"
-	sudo install "$(ICON)" "$(prefix_images)"
+	sudo install "$(IMAGES_PREFIX)"*.svg "$(prefix_images)"
 
