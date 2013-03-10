@@ -56,6 +56,7 @@ struct {
     unsigned short g;
     unsigned short b;
     short x;
+    short min_x;
 #ifdef HAS_SHORTCUTS
     char shortcut_increase[SHORTCUT_SIZE];
     char shortcut_decrease[SHORTCUT_SIZE];
@@ -146,20 +147,22 @@ void app_init()
 void app_update_tray_icon()
 {
     char filename[] = str(INSTALL_PREFIX_IMAGES) "/thered_0.svg";
-    filename[sizeof(filename) * sizeof(char) - 6] = '0' + bound(0, -app.x / 2, 9);
+    filename[sizeof(filename) * sizeof(char) - 6] = '0' + bound(0, app.x * 14 / app.min_x, 9);
     gtk_status_icon_set_from_file(app.tray, filename);
 }
 
 void app_set_dark(int x)
 {
+    if (x < app.min_x)
+        return;
+
     int r = bound(0, 255 + x * app.r, 255);
     int g = bound(0, 255 + x * app.g, 255);
     int b = bound(0, 255 + x * app.b, 255);
-    if ( r + g + b > 128 ) {
-        if ( change_colors(r, g, b) ) {
-            app.x = x;
-            app_update_tray_icon();
-        }
+
+    if ( change_colors(r, g, b) ) {
+        app.x = x;
+        app_update_tray_icon();
     }
 }
 
@@ -368,6 +371,8 @@ void parse_command_line(int argc, char **argv)
             }
         }
     }
+
+    app.min_x = - (3 * 255 - 128) / (app.r + app.g + app.b);
 }
 
 #ifdef HAS_SHORTCUTS
