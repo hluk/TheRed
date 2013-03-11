@@ -18,6 +18,11 @@
 */
 
 /**
+ * Bound number to given range.
+ */
+int bound(int min, int x, int max);
+
+/**
  * Change default screen colors by adding an amount to each color component.
  * @return -1 on error, otherwise value of change_colors()
  */
@@ -30,4 +35,3 @@ int darken(int r, int g, int b);
  */
 int change_colors(unsigned short *red, unsigned short *green, unsigned short *blue,
                   int sz, int r, int g, int b);
-

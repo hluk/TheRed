@@ -25,12 +25,13 @@
 int darken(int r, int g, int b)
 {
     int retval = -1;
+    WORD *ramp, *red, *green, *blue;
 
     HDC hDC = GetDC(NULL);
     if (hDC == NULL)
         return -1;
 
-    WORD *ramp = malloc(3 * 256 * sizeof(WORD));
+    ramp = malloc(3 * 256 * sizeof(WORD));
     if (ramp == NULL) {
         perror("malloc");
         ReleaseDC(NULL, hDC);
@@ -38,16 +39,17 @@ int darken(int r, int g, int b)
     }
 
     if ( GetDeviceGammaRamp(hDC, ramp) ) {
-        WORD *red   = &gamma_ramps[0];
-        WORD *green = &gamma_ramps[256];
-        WORD *blue  = &gamma_ramps[512];
+        red   = &ramp[0];
+        green = &ramp[256];
+        blue  = &ramp[512];
 
-        retval = change_colors(red, green, blue, sz, r, g, b);
+        retval = change_colors(red, green, blue, 256, r, g, b);
 
-        SetDeviceGammaRamp(hDC, gamma_ramps);
+        if ( !SetDeviceGammaRamp(hDC, ramp) )
+            retval = -1;
     }
 
-    free(gamma_ramps);
+    free(ramp);
 
     ReleaseDC(NULL, hDC);
 

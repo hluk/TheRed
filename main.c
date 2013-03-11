@@ -63,14 +63,6 @@ struct {
 #endif // HAS_SHORTCUTS
 } app;
 
-/**
- * Bound number to given range.
- */
-int bound(int min, int x, int max)
-{
-    return ( x < min ) ? min : ( x > max ) ? max : x;
-}
-
 void app_init()
 {
     app.tray = NULL;
@@ -93,12 +85,14 @@ void app_update_tray_icon()
 
 void app_set_dark(int x)
 {
+    int r, g, b;
+
     if (x < app.min_x)
         return;
 
-    int r = bound(0, 255 + x * app.r, 255);
-    int g = bound(0, 255 + x * app.g, 255);
-    int b = bound(0, 255 + x * app.b, 255);
+    r = bound(0, 255 + x * app.r, 255);
+    g = bound(0, 255 + x * app.g, 255);
+    b = bound(0, 255 + x * app.b, 255);
 
     if ( darken(r, g, b) == 0 ) {
         app.x = x;
@@ -180,10 +174,12 @@ gboolean on_tray_button_press(GtkStatusIcon *status_icon,
                               GdkEvent      *event,
                               gpointer       user_data)
 {
+    guint button;
+
     UNUSED(status_icon);
     UNUSED(user_data);
 
-    guint button = event->button.button;
+    button = event->button.button;
 
     if (button == MouseButtonMiddle) {
         reset_colors();
@@ -203,10 +199,12 @@ gboolean on_tray_scroll(GtkStatusIcon *status_icon,
                         GdkEvent      *event,
                         gpointer       user_data)
 {
+    GdkScrollDirection scroll;
+
     UNUSED(status_icon);
     UNUSED(user_data);
 
-    GdkScrollDirection scroll = event->scroll.direction;
+    scroll = event->scroll.direction;
 
     if (scroll == GDK_SCROLL_UP ) {
         app_set_dark(app.x + 1);
@@ -244,8 +242,10 @@ const char *parse_next_command_line_argument(int argc, char **argv, int *i)
 
 gboolean parse_command_line_colors(int argc, char **argv, int *i)
 {
+    int value;
     unsigned short *color = NULL;
     const char *arg = argv[*i];
+
     if ( is_arg(arg, 'r', "red") )
         color = &app.r;
     else if ( is_arg(arg, 'g', "green") )
@@ -257,7 +257,7 @@ gboolean parse_command_line_colors(int argc, char **argv, int *i)
         return FALSE;
 
     arg = parse_next_command_line_argument(argc, argv, i);
-    int value = atoi(arg);
+    value = atoi(arg);
 
     if (value < 0 || value > 255) {
         fprintf(stderr, "Color value must be in range from 0 to 255!\n");
