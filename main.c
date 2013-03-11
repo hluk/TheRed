@@ -17,6 +17,8 @@
     along with TheRed.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "darken.h"
+
 #ifdef HAS_SHORTCUTS
 #   include "libkeybinder/keybinder.h"
 #endif
@@ -25,8 +27,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <X11/Xlib.h>
-#include <X11/extensions/xf86vmode.h>
 
 // default option values
 #define DEFAULT_RED 0
@@ -71,66 +71,6 @@ int bound(int min, int x, int max)
     return ( x < min ) ? min : ( x > max ) ? max : x;
 }
 
-/**
- * Change default screen colors by adding an amount to each color component.
- */
-gboolean change_colors(int r, int g, int b)
-{
-    int sz, i;
-    unsigned short *red, *green, *blue;
-
-    Display *dpy = XOpenDisplay(NULL);
-    XF86VidModeGetGammaRampSize(dpy, 0, &sz);
-
-    red = malloc(sz * sizeof(unsigned short));
-    green = malloc(sz * sizeof(unsigned short));
-    blue = malloc(sz * sizeof(unsigned short));
-
-    XF86VidModeGetGammaRamp(dpy, 0, sz, red, green, blue);
-
-    if (r == 0 && g == 0 && b == 0) {
-        int x = 0;
-        for (i = 0; i < sz; i++) {
-            red[i] = green[i] = blue[i] = x;
-            x += sz;
-        }
-    } else {
-        const int max = sz * sz;
-
-        const int rxx = r * sz / 255;
-        const int gxx = g * sz / 255;
-        const int bxx = b * sz / 255;
-
-        if ( red[1]   == bound(0, rxx, sz) &&
-             green[1] == bound(0, gxx, sz) &&
-             blue[1]  == bound(0, bxx, sz) )
-        {
-            return FALSE;
-        }
-
-        int rx = 0;
-        int gx = 0;
-        int bx = 0;
-        for (i = 0; i < sz; i++) {
-            red[i]   = bound(0, rx, i*sz);
-            green[i] = bound(0, gx, i*sz);
-            blue[i]  = bound(0, bx, i*sz);
-            rx = bound(0, rx + rxx, max);
-            gx = bound(0, gx + gxx, max);
-            bx = bound(0, bx + bxx, max);
-        }
-    }
-
-    XF86VidModeSetGammaRamp(dpy, 0, sz, red, green, blue);
-
-    free(red);
-    free(green);
-    free(blue);
-    XCloseDisplay(dpy);
-
-    return TRUE;
-}
-
 void app_init()
 {
     app.tray = NULL;
@@ -160,7 +100,7 @@ void app_set_dark(int x)
     int g = bound(0, 255 + x * app.g, 255);
     int b = bound(0, 255 + x * app.b, 255);
 
-    if ( change_colors(r, g, b) ) {
+    if ( darken(r, g, b) == 0 ) {
         app.x = x;
         app_update_tray_icon();
     }
@@ -171,7 +111,10 @@ void app_set_dark(int x)
  */
 void reset_colors()
 {
-    change_colors(0, 0, 0);
+    if ( darken(0, 0, 0) == -1 ) {
+        g_error("ERROR: Cannot set screen colors!\n");
+        exit(-1);
+    }
 }
 
 void print_build_info()
@@ -351,7 +294,8 @@ gboolean parse_command_line_shortcuts(int argc, char **argv, int *i)
 
 void parse_command_line(int argc, char **argv)
 {
-    for (int i = 1; i < argc; ++i) {
+    int i;
+    for (i = 1; i < argc; ++i) {
         if ( is_arg(argv[i], 'h', "help") ) {
             print_help(argv[0]);
             exit(0);
