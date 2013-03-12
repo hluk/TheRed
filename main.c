@@ -47,6 +47,8 @@
 #define strx(x) #x
 #define str(x) strx(x)
 
+#define TOOLTIP_MAX_CHARS 128
+
 /**
  * Options and widgets for the application.
  */
@@ -62,6 +64,13 @@ struct {
     char shortcut_decrease[SHORTCUT_SIZE];
 #endif // HAS_SHORTCUTS
 } app;
+
+void app_get_colors(int *r, int *g, int *b, short x)
+{
+    *r = bound(0, 255 + x * app.r, 255);
+    *g = bound(0, 255 + x * app.g, 255);
+    *b = bound(0, 255 + x * app.b, 255);
+}
 
 void app_init()
 {
@@ -79,8 +88,21 @@ void app_init()
 void app_update_tray_icon()
 {
     char filename[] = str(INSTALL_PREFIX_IMAGES) "/thered_0.svg";
+    char tooltip[TOOLTIP_MAX_CHARS] = "";
+    int r, g, b;
+
     filename[sizeof(filename) * sizeof(char) - 6] = '0' + bound(0, app.x * 14 / app.min_x, 9);
     gtk_status_icon_set_from_file(app.tray, filename);
+
+    app_get_colors(&r, &g, &b, app.x);
+    snprintf(tooltip, TOOLTIP_MAX_CHARS,
+            "<tt>red:   </tt><b>%d</b>%%\n"
+            "<tt>green: </tt><b>%d</b>%%\n"
+            "<tt>blue:  </tt><b>%d</b>%%",
+            r * 100 / 255,
+            g * 100 / 255,
+            b * 100 / 255);
+    gtk_status_icon_set_tooltip_markup(app.tray, tooltip);
 }
 
 void app_set_dark(int x)
@@ -90,9 +112,7 @@ void app_set_dark(int x)
     if (x < app.min_x)
         return;
 
-    r = bound(0, 255 + x * app.r, 255);
-    g = bound(0, 255 + x * app.g, 255);
-    b = bound(0, 255 + x * app.b, 255);
+    app_get_colors(&r, &g, &b, x);
 
     if ( darken(r, g, b) == 0 ) {
         app.x = x;
