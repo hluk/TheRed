@@ -30,8 +30,8 @@
 
 // default option values
 #define DEFAULT_RED 0
-#define DEFAULT_GREEN 12
-#define DEFAULT_BLUE 24
+#define DEFAULT_GREEN 9
+#define DEFAULT_BLUE 18
 
 #define MouseButtonLeft 1
 #define MouseButtonMiddle 2
